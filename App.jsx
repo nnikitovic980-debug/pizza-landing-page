@@ -404,14 +404,16 @@ const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = fals
     { x: 72, y: 43, r: 5, c: pizza.herb }
   ], [pizza.cheese, pizza.herb, pizza.sauce, pizza.topping]);
 
+  const shouldAnimatePizza = active && !shouldReduceMotion && !isMobile;
+
   return (
     <motion.div
-      animate={active && !shouldReduceMotion && !isMobile ? { rotate: [0, -4, 6, 0], scale: [1, 1.035, 1] } : { rotate: 0, scale: 1 }}
+      animate={shouldAnimatePizza ? { rotate: [0, -4, 6, 0], scale: [1, 1.035, 1] } : { rotate: 0, scale: 1 }}
       transition={{ duration: 0.16, ease: "easeOut" }}
       className={`relative ${size} mx-auto transform-gpu`}
     >
-      <div className={`absolute inset-3 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.18] blur-md sm:opacity-[0.22] sm:blur-2xl`} />
-      <div className="absolute inset-[8%] rounded-full bg-[#7c3f16] shadow-[0_18px_32px_rgba(0,0,0,.34)] sm:shadow-[0_24px_44px_rgba(0,0,0,.42)]" />
+      <div className={`absolute inset-3 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.12] blur-lg sm:opacity-[0.22] sm:blur-2xl`} />
+      <div className="absolute inset-[8%] rounded-full bg-[#7c3f16] shadow-[0_16px_26px_rgba(0,0,0,.32)] sm:shadow-[0_24px_44px_rgba(0,0,0,.42)]" />
       <div className="absolute inset-[13%] rounded-full bg-gradient-to-br from-[#f5c46f] via-[#d88925] to-[#7c3f16]" />
       <div
         className="absolute inset-[21%] rounded-full"
@@ -419,6 +421,7 @@ const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = fals
           background: `radial-gradient(circle at 30% 24%, ${pizza.cheese} 0 10%, transparent 11%), radial-gradient(circle at 66% 60%, ${pizza.cheese} 0 8%, transparent 9%), ${pizza.sauce}`
         }}
       />
+
       <svg className="absolute inset-[14%] h-[72%] w-[72%] overflow-visible" viewBox="0 0 100 100">
         {toppings.map((t, index) => (
           <circle
@@ -450,9 +453,9 @@ function FallingOregano({ trigger }) {
     return {
       id: `${trigger}-${i}`,
       left: 8 + ((i * 53) % 84),
-      delay: (i % 4) * 0.045,
+      delay: (i % 4) * 0.04,
       duration: isMobile ? 1.05 + (i % 3) * 0.08 : 1.25 + (i % 4) * 0.1,
-      fall: isMobile ? 420 + (i % 3) * 26 : 520 + (i % 4) * 32,
+      fall: isMobile ? 410 + (i % 3) * 26 : 520 + (i % 4) * 32,
       driftA: direction * drift,
       driftB: direction * -drift * 0.55,
       driftC: direction * drift * 0.35,
@@ -552,18 +555,19 @@ export default function ScanoryPizzaExperience() {
   }, []);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#120b06] text-[#fff7ea] selection:bg-amber-300 selection:text-stone-950">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-8%,rgba(146,92,35,.22),transparent_32%),radial-gradient(circle_at_10%_26%,rgba(220,85,31,.12),transparent_25%),radial-gradient(circle_at_88%_26%,rgba(34,197,94,.10),transparent_24%),radial-gradient(circle_at_86%_86%,rgba(180,108,38,.12),transparent_28%)]" />
-        <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(45deg,#fff_1px,transparent_1px),linear-gradient(-45deg,#fff_1px,transparent_1px)] [background-size:34px_34px]" />
+    <div className="relative isolate min-h-screen overflow-x-hidden bg-[#120b06] text-[#fff7ea] selection:bg-amber-300 selection:text-stone-950">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#120b06_0%,#160d07_42%,#100906_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(217,164,65,.13),transparent_36%),radial-gradient(circle_at_50%_100%,rgba(120,64,24,.10),transparent_34%)]" />
+        <div className="absolute inset-0 opacity-[0.022] [background-image:linear-gradient(45deg,#fff_1px,transparent_1px),linear-gradient(-45deg,#fff_1px,transparent_1px)] [background-size:34px_34px]" />
       </div>
 
       {burst > 0 && <FallingOregano key={burst} trigger={burst} />}
 
       <main className="relative mx-auto w-full max-w-[980px] px-4 py-4 sm:px-8 sm:py-8">
-        <section className="relative min-h-[calc(100svh-2rem)] overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] px-5 py-7 shadow-xl shadow-black/30 sm:backdrop-blur-xl sm:min-h-[560px] sm:rounded-[2rem] sm:p-10 sm:shadow-2xl sm:shadow-black/35">
-          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-500/10 blur-md sm:blur-3xl" />
-          <div className="absolute -bottom-20 left-4 h-56 w-56 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
+        <section className="relative min-h-[calc(100svh-2rem)] overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] px-5 py-7 shadow-xl shadow-black/30 sm:min-h-[560px] sm:rounded-[2rem] sm:p-10 sm:shadow-2xl sm:shadow-black/35 sm:backdrop-blur-xl">
+          <div className="absolute -right-20 -top-20 hidden h-56 w-56 rounded-full bg-amber-500/10 blur-3xl sm:block" />
+          <div className="absolute -bottom-20 left-4 hidden h-56 w-56 rounded-full bg-amber-900/10 blur-3xl sm:block" />
 
           <div className="relative flex min-h-[calc(100svh-5.5rem)] flex-col items-center justify-center text-center sm:min-h-[480px]">
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#f0c06a] via-[#b8732a] to-[#6b3f1d] text-3xl shadow-xl shadow-black/30">
@@ -604,9 +608,9 @@ export default function ScanoryPizzaExperience() {
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="overflow-hidden"
             >
-              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/22 p-5 shadow-xl shadow-black/20 sm:backdrop-blur-xl sm:mt-7 sm:rounded-[2rem] sm:p-8 sm:shadow-2xl sm:shadow-black/25">
-                <div className="absolute -right-14 top-8 h-44 w-44 rounded-full bg-amber-500/10 blur-md sm:blur-3xl" />
-                <div className="absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
+              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/22 p-5 shadow-xl shadow-black/20 sm:mt-7 sm:rounded-[2rem] sm:p-8 sm:shadow-2xl sm:shadow-black/25 sm:backdrop-blur-xl">
+                <div className="absolute -right-14 top-8 hidden h-44 w-44 rounded-full bg-amber-500/10 blur-3xl sm:block" />
+                <div className="absolute -left-16 bottom-0 hidden h-44 w-44 rounded-full bg-orange-900/10 blur-3xl sm:block" />
 
                 <div className="relative">
                   <p className="text-[11px] font-black uppercase tracking-[0.38em] text-amber-300">Tap to taste</p>
@@ -625,7 +629,7 @@ export default function ScanoryPizzaExperience() {
                       }`}
                     >
                       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pizza.palette}`} />
-                      <div className={`absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.14] blur-md sm:opacity-[0.16] sm:blur-xl`} />
+                      <div className={`absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.09] blur-lg sm:opacity-[0.16] sm:blur-xl`} />
                       <PizzaIllustration pizza={pizza} active={selected?.id === pizza.id} small isMobile={isMobile} />
                       <h3 className="mt-2 truncate text-[14px] font-black leading-4 tracking-[-0.04em] sm:text-lg sm:leading-5">{pizza.name}</h3>
                       <p className={`mt-2 text-[11px] font-bold sm:text-xs ${pizza.accent}`}>{pizza.label}</p>
@@ -634,7 +638,7 @@ export default function ScanoryPizzaExperience() {
                 </div>
               </section>
 
-              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-5 sm:backdrop-blur-xl sm:mt-7 sm:rounded-[2rem] sm:p-8">
+              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-5 sm:mt-7 sm:rounded-[2rem] sm:p-8 sm:backdrop-blur-xl">
                 <div className="grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
                   <div className="rounded-[1.55rem] bg-[#20130b] p-5 ring-1 ring-white/10 sm:rounded-[1.8rem] sm:p-6">
                     <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300">Kitchen note</p>
@@ -663,8 +667,8 @@ export default function ScanoryPizzaExperience() {
                       style={{ transformStyle: "preserve-3d" }}
                     >
                       <div className="absolute inset-0 p-5 sm:p-6" style={{ backfaceVisibility: "hidden" }}>
-                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-md sm:blur-3xl" />
-                        <div className="absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
+                        <div className="absolute -right-16 -top-16 hidden h-48 w-48 rounded-full bg-amber-500/12 blur-3xl sm:block" />
+                        <div className="absolute -bottom-14 -left-14 hidden h-48 w-48 rounded-full bg-amber-900/10 blur-3xl sm:block" />
 
                         <div className="relative grid h-full min-h-[510px] place-items-center text-center min-[420px]:min-h-[480px] sm:min-h-[310px]">
                           <div>
@@ -691,7 +695,7 @@ export default function ScanoryPizzaExperience() {
                       </div>
 
                       <div className="absolute inset-0 overflow-y-auto overscroll-contain p-5 sm:p-6" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-md sm:blur-3xl" />
+                        <div className="absolute -right-16 -top-16 hidden h-48 w-48 rounded-full bg-amber-500/12 blur-3xl sm:block" />
 
                         <div className="relative">
                           <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300">Dough formula</p>
