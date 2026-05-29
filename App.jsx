@@ -390,7 +390,7 @@ function useIsMobile() {
 
 const fastEase = [0.16, 1, 0.3, 1];
 
-const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = false, small = false }) {
+const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = false, small = false, isMobile = false }) {
   const shouldReduceMotion = useReducedMotion();
   const size = small ? "h-24 w-24 min-[420px]:h-28 min-[420px]:w-28" : "h-56 w-56 sm:h-72 sm:w-72";
 
@@ -406,12 +406,12 @@ const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = fals
 
   return (
     <motion.div
-      animate={active && !shouldReduceMotion ? { rotate: [0, -4, 6, 0], scale: [1, 1.035, 1] } : { rotate: 0, scale: 1 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-      className={`relative ${size} mx-auto transform-gpu will-change-transform`}
+      animate={active && !shouldReduceMotion && !isMobile ? { rotate: [0, -4, 6, 0], scale: [1, 1.035, 1] } : { rotate: 0, scale: 1 }}
+      transition={{ duration: 0.16, ease: "easeOut" }}
+      className={`relative ${size} mx-auto transform-gpu`}
     >
-      <div className={`absolute inset-3 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.22] blur-2xl`} />
-      <div className="absolute inset-[8%] rounded-full bg-[#7c3f16] shadow-[0_24px_44px_rgba(0,0,0,.42)]" />
+      <div className={`absolute inset-3 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.18] blur-md sm:opacity-[0.22] sm:blur-2xl`} />
+      <div className="absolute inset-[8%] rounded-full bg-[#7c3f16] shadow-[0_18px_32px_rgba(0,0,0,.34)] sm:shadow-[0_24px_44px_rgba(0,0,0,.42)]" />
       <div className="absolute inset-[13%] rounded-full bg-gradient-to-br from-[#f5c46f] via-[#d88925] to-[#7c3f16]" />
       <div
         className="absolute inset-[21%] rounded-full"
@@ -421,20 +421,18 @@ const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = fals
       />
       <svg className="absolute inset-[14%] h-[72%] w-[72%] overflow-visible" viewBox="0 0 100 100">
         {toppings.map((t, index) => (
-          <motion.circle
+          <circle
             key={index}
             cx={t.x}
             cy={t.y}
             r={t.r}
             fill={t.c}
             opacity="0.95"
-            stroke="rgba(255,255,255,.22)"
+            stroke="rgba(255,255,255,0.22)"
             strokeWidth="1.4"
-            animate={active && !shouldReduceMotion ? { r: [t.r, t.r + 1.15, t.r] } : { r: t.r }}
-            transition={{ duration: 0.18, delay: index * 0.008 }}
           />
         ))}
-        <path d="M18 48 C34 38, 43 60, 57 48 S76 50, 82 38" fill="none" stroke="rgba(255,255,255,.2)" strokeWidth="3" strokeLinecap="round" />
+        <path d="M18 48 C34 38, 43 60, 57 48 S76 50, 82 38" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" strokeLinecap="round" />
       </svg>
     </motion.div>
   );
@@ -443,59 +441,77 @@ const PizzaIllustration = memo(function PizzaIllustration({ pizza, active = fals
 function FallingOregano({ trigger }) {
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
-  const leafCount = isMobile ? 12 : 16;
+  const leafCount = isMobile ? 6 : 10;
 
   const leaves = useMemo(() => Array.from({ length: leafCount }, (_, i) => {
     const direction = i % 2 === 0 ? 1 : -1;
-    const baseDrift = 16 + (i % 5) * 6;
+    const drift = 18 + (i % 4) * 8;
 
     return {
       id: `${trigger}-${i}`,
-      left: 6 + ((i * 47) % 88),
-      delay: (i % 6) * 0.045,
-      driftA: direction * baseDrift,
-      driftB: direction * -baseDrift * 0.75,
-      driftC: direction * baseDrift * 0.45,
-      size: 4 + (i % 4),
-      fall: isMobile ? 500 + (i % 3) * 24 : 560 + (i % 4) * 28,
-      rotate: direction * (280 + (i % 5) * 38)
+      left: 8 + ((i * 53) % 84),
+      delay: (i % 4) * 0.045,
+      duration: isMobile ? 1.05 + (i % 3) * 0.08 : 1.25 + (i % 4) * 0.1,
+      fall: isMobile ? 420 + (i % 3) * 26 : 520 + (i % 4) * 32,
+      driftA: direction * drift,
+      driftB: direction * -drift * 0.55,
+      driftC: direction * drift * 0.35,
+      rotate: direction * (230 + (i % 4) * 35),
+      size: 4 + (i % 3)
     };
   }), [trigger, leafCount, isMobile]);
 
+  if (shouldReduceMotion) return null;
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden [contain:layout]">
-      {leaves.map((leaf) => (
-        <motion.span
-          key={leaf.id}
-          initial={{
-            opacity: 0,
-            y: -20,
-            x: 0,
-            rotate: 0,
-            scale: 0.92
-          }}
-          animate={
-            shouldReduceMotion
-              ? { opacity: 0 }
-              : {
-                  opacity: [0, 0.82, 0.78, 0.48, 0],
-                  y: [0, leaf.fall * 0.22, leaf.fall * 0.48, leaf.fall * 0.78, leaf.fall],
-                  x: [0, leaf.driftA, leaf.driftB, leaf.driftC, leaf.driftA * 0.25],
-                  rotate: [0, leaf.rotate * 0.28, leaf.rotate * 0.62, leaf.rotate * 0.86, leaf.rotate],
-                  scale: [0.92, 1, 0.96, 1.02, 0.88]
-                }
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden [contain:layout_paint]">
+      <style>
+        {`
+          @keyframes scanory-oregano-fall {
+            0% {
+              opacity: 0;
+              transform: translate3d(0, -18px, 0) rotate(0deg) scale(0.9);
+            }
+            15% {
+              opacity: 0.82;
+              transform: translate3d(var(--drift-a), calc(var(--fall) * 0.18), 0) rotate(calc(var(--rot) * 0.22)) scale(1);
+            }
+            48% {
+              opacity: 0.78;
+              transform: translate3d(var(--drift-b), calc(var(--fall) * 0.48), 0) rotate(calc(var(--rot) * 0.56)) scale(0.96);
+            }
+            78% {
+              opacity: 0.45;
+              transform: translate3d(var(--drift-c), calc(var(--fall) * 0.78), 0) rotate(calc(var(--rot) * 0.82)) scale(1.02);
+            }
+            100% {
+              opacity: 0;
+              transform: translate3d(calc(var(--drift-a) * 0.25), var(--fall), 0) rotate(var(--rot)) scale(0.85);
+            }
           }
-          transition={{
-            duration: isMobile ? 1.42 : 1.65,
-            delay: leaf.delay,
-            ease: [0.2, 0.8, 0.2, 1]
-          }}
-          className="absolute top-0 rounded-[60%] bg-emerald-300/70 shadow-sm shadow-emerald-950/30 transform-gpu will-change-transform"
+        `}
+      </style>
+
+      {leaves.map((leaf) => (
+        <span
+          key={leaf.id}
+          className="absolute top-0 rounded-[60%] bg-emerald-300/70 shadow-sm shadow-emerald-950/30"
           style={{
             left: `${leaf.left}%`,
             width: leaf.size * 1.8,
             height: leaf.size,
-            borderRadius: "65% 35% 65% 35%"
+            borderRadius: "65% 35% 65% 35%",
+            animationName: "scanory-oregano-fall",
+            animationDuration: `${leaf.duration}s`,
+            animationDelay: `${leaf.delay}s`,
+            animationTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+            animationFillMode: "both",
+            willChange: "transform, opacity",
+            "--fall": `${leaf.fall}px`,
+            "--drift-a": `${leaf.driftA}px`,
+            "--drift-b": `${leaf.driftB}px`,
+            "--drift-c": `${leaf.driftC}px`,
+            "--rot": `${leaf.rotate}deg`
           }}
         />
       ))}
@@ -510,12 +526,14 @@ export default function ScanoryPizzaExperience() {
   const [doughOpen, setDoughOpen] = useState(false);
   const [burst, setBurst] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const overlayOpen = Boolean(selected) || secretOpen;
     const previousOverflow = document.body.style.overflow;
 
     if (overlayOpen) document.body.style.overflow = "hidden";
+
     return () => {
       document.body.style.overflow = previousOverflow;
     };
@@ -525,28 +543,45 @@ export default function ScanoryPizzaExperience() {
 
   const openPizza = useCallback((pizza) => {
     setSelected(pizza);
-    setBurst((b) => b + 1);
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        setBurst((b) => b + 1);
+      });
+    });
   }, []);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#120b06] text-[#fff7ea] selection:bg-amber-300 selection:text-stone-950">
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-8%,rgba(146,92,35,.22),transparent_32%),radial-gradient(circle_at_10%_26%,rgba(220,85,31,.12),transparent_25%),radial-gradient(circle_at_88%_26%,rgba(34,197,94,.10),transparent_24%),radial-gradient(circle_at_86%_86%,rgba(180,108,38,.12),transparent_28%)]" />
-        <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(45deg,#fff_1px,transparent_1px),linear-gradient(-45deg,#fff_1px,transparent_1px)] [background-size:34px_34px]" />
+        <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(45deg,#fff_1px,transparent_1px),linear-gradient(-45deg,#fff_1px,transparent_1px)] [background-size:34px_34px]" />
       </div>
 
-      <AnimatePresence>{burst > 0 && <FallingOregano trigger={burst} />}</AnimatePresence>
+      {burst > 0 && <FallingOregano key={burst} trigger={burst} />}
 
       <main className="relative mx-auto w-full max-w-[980px] px-4 py-4 sm:px-8 sm:py-8">
-        <section className="relative min-h-[calc(100svh-2rem)] overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] px-5 py-7 shadow-2xl shadow-black/35 sm:backdrop-blur-xl sm:min-h-[560px] sm:rounded-[2rem] sm:p-10">
-          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl" />
-          <div className="absolute -bottom-20 left-4 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
+        <section className="relative min-h-[calc(100svh-2rem)] overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] px-5 py-7 shadow-xl shadow-black/30 sm:backdrop-blur-xl sm:min-h-[560px] sm:rounded-[2rem] sm:p-10 sm:shadow-2xl sm:shadow-black/35">
+          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-500/10 blur-md sm:blur-3xl" />
+          <div className="absolute -bottom-20 left-4 h-56 w-56 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
 
           <div className="relative flex min-h-[calc(100svh-5.5rem)] flex-col items-center justify-center text-center sm:min-h-[480px]">
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#f0c06a] via-[#b8732a] to-[#6b3f1d] text-3xl shadow-xl shadow-black/30">🍕</motion.div>
-            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.03 }} className="mb-3 text-[11px] font-black uppercase tracking-[0.42em] text-amber-300">Scanory Kitchen</motion.p>
-            <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.06 }} className="mx-auto max-w-3xl text-5xl font-black leading-[.88] tracking-[-0.07em] sm:text-7xl">Your wall art just became a recipe book.</motion.h1>
-            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.09 }} className="mx-auto mt-5 max-w-lg text-sm leading-7 text-amber-50/66 sm:text-base">20 masterclass recipes unlocked from one single visual scan.</motion.p>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#f0c06a] via-[#b8732a] to-[#6b3f1d] text-3xl shadow-xl shadow-black/30">
+              🍕
+            </motion.div>
+
+            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.03 }} className="mb-3 text-[11px] font-black uppercase tracking-[0.42em] text-amber-300">
+              Scanory Kitchen
+            </motion.p>
+
+            <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.06 }} className="mx-auto max-w-3xl text-5xl font-black leading-[.88] tracking-[-0.07em] sm:text-7xl">
+              Your wall art just became a recipe book.
+            </motion.h1>
+
+            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, delay: 0.09 }} className="mx-auto mt-5 max-w-lg text-sm leading-7 text-amber-50/66 sm:text-base">
+              20 masterclass recipes unlocked from one single visual scan.
+            </motion.p>
+
             <motion.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -554,7 +589,8 @@ export default function ScanoryPizzaExperience() {
               onClick={toggleUnlock}
               className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#d9a441] px-6 py-3.5 text-sm font-black text-stone-950 shadow-xl shadow-black/25 active:scale-95"
             >
-              {unlocked ? <UnlockKeyhole size={17} /> : <LockKeyhole size={17} />} {unlocked ? "Lock collection" : "Unlock recipes"}
+              {unlocked ? <UnlockKeyhole size={17} /> : <LockKeyhole size={17} />}
+              {unlocked ? "Lock collection" : "Unlock recipes"}
             </motion.button>
           </div>
         </section>
@@ -568,29 +604,32 @@ export default function ScanoryPizzaExperience() {
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="overflow-hidden"
             >
-              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/22 p-5 shadow-2xl shadow-black/25 sm:backdrop-blur-xl sm:mt-7 sm:rounded-[2rem] sm:p-8">
-                <div className="absolute -right-14 top-8 h-44 w-44 rounded-full bg-amber-500/9 blur-3xl" />
-                <div className="absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+              <section className="relative mt-5 overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/22 p-5 shadow-xl shadow-black/20 sm:backdrop-blur-xl sm:mt-7 sm:rounded-[2rem] sm:p-8 sm:shadow-2xl sm:shadow-black/25">
+                <div className="absolute -right-14 top-8 h-44 w-44 rounded-full bg-amber-500/10 blur-md sm:blur-3xl" />
+                <div className="absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
+
                 <div className="relative">
                   <p className="text-[11px] font-black uppercase tracking-[0.38em] text-amber-300">Tap to taste</p>
                   <h2 className="mt-3 max-w-xl text-4xl font-black leading-[.92] tracking-[-0.055em] sm:text-5xl">Choose tonight’s pizza</h2>
                 </div>
 
-                <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5 [content-visibility:auto]">
+                <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                   {pizzas.map((pizza) => (
-                    <motion.button
+                    <button
                       key={pizza.id}
                       onClick={() => openPizza(pizza)}
-                      whileTap={{ scale: 0.965 }}
-                      transition={{ duration: 0.1 }}
-                      className={`group relative overflow-hidden rounded-[1.45rem] border p-3 text-left shadow-xl shadow-black/20 transition-colors duration-100 sm:rounded-[1.7rem] sm:p-4 ${selected?.id === pizza.id ? "border-amber-300/55 bg-[#2a1a0b]/55" : "border-white/10 bg-white/[0.055] active:bg-white/[0.1] sm:hover:bg-white/[0.09]"}`}
+                      className={`group relative overflow-hidden rounded-[1.45rem] border p-3 text-left shadow-lg shadow-black/15 transition-colors duration-100 active:scale-[0.985] sm:rounded-[1.7rem] sm:p-4 sm:shadow-xl sm:shadow-black/20 ${
+                        selected?.id === pizza.id
+                          ? "border-amber-300/55 bg-[#2a1a0b]/55"
+                          : "border-white/10 bg-white/[0.055] active:bg-white/[0.1] sm:hover:bg-white/[0.09]"
+                      }`}
                     >
                       <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${pizza.palette}`} />
-                      <div className={`absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.16] blur-2xl`} />
-                      <PizzaIllustration pizza={pizza} active={selected?.id === pizza.id} small />
-                      <h3 className="mt-2 text-[14px] font-black leading-4 tracking-[-0.04em] sm:text-lg sm:leading-5 truncate">{pizza.name}</h3>
+                      <div className={`absolute -right-10 -top-10 h-24 w-24 rounded-full bg-gradient-to-br ${pizza.palette} opacity-[0.14] blur-md sm:opacity-[0.16] sm:blur-xl`} />
+                      <PizzaIllustration pizza={pizza} active={selected?.id === pizza.id} small isMobile={isMobile} />
+                      <h3 className="mt-2 truncate text-[14px] font-black leading-4 tracking-[-0.04em] sm:text-lg sm:leading-5">{pizza.name}</h3>
                       <p className={`mt-2 text-[11px] font-bold sm:text-xs ${pizza.accent}`}>{pizza.label}</p>
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -600,11 +639,13 @@ export default function ScanoryPizzaExperience() {
                   <div className="rounded-[1.55rem] bg-[#20130b] p-5 ring-1 ring-white/10 sm:rounded-[1.8rem] sm:p-6">
                     <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300">Kitchen note</p>
                     <h2 className="mt-3 text-4xl font-black leading-[.95] tracking-[-0.055em]">Before you bake</h2>
+
                     <div className="mt-5 space-y-3 text-sm leading-6 text-amber-50/70">
                       <p>Heat the oven as high as possible.</p>
                       <p>Use less sauce than you think.</p>
                       <p>Fresh toppings go after baking.</p>
                     </div>
+
                     <button onClick={() => setSecretOpen(true)} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-amber-300/25 bg-amber-300/10 px-5 py-3 text-sm font-black text-amber-100 active:scale-[.98]">
                       <Hand size={17} /> Touch for chef secret
                     </button>
@@ -617,33 +658,45 @@ export default function ScanoryPizzaExperience() {
                   >
                     <motion.div
                       animate={{ rotateY: doughOpen ? 180 : 0 }}
-                      transition={{ duration: 0.34, ease: fastEase }}
-                      className="relative h-full min-h-[560px] w-full transform-gpu will-change-transform min-[420px]:min-h-[530px] sm:min-h-[360px]"
+                      transition={{ duration: 0.3, ease: fastEase }}
+                      className="relative h-full min-h-[560px] w-full transform-gpu min-[420px]:min-h-[530px] sm:min-h-[360px]"
                       style={{ transformStyle: "preserve-3d" }}
                     >
                       <div className="absolute inset-0 p-5 sm:p-6" style={{ backfaceVisibility: "hidden" }}>
-                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-3xl" />
-                        <div className="absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
+                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-md sm:blur-3xl" />
+                        <div className="absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-emerald-500/10 blur-md sm:blur-3xl" />
+
                         <div className="relative grid h-full min-h-[510px] place-items-center text-center min-[420px]:min-h-[480px] sm:min-h-[310px]">
                           <div>
-                            <motion.div animate={shouldReduceMotion ? { rotate: 0, y: 0 } : { rotate: [0, 3, -3, 0], y: [0, -4, 0] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }} className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#d9a441] via-[#8b5a2b] to-[#4a2b15] text-4xl shadow-2xl shadow-black/30">🥖</motion.div>
+                            <motion.div
+                              animate={shouldReduceMotion || isMobile ? { rotate: 0, y: 0 } : { rotate: [0, 3, -3, 0], y: [0, -4, 0] }}
+                              transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }}
+                              className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#d9a441] via-[#8b5a2b] to-[#4a2b15] text-4xl shadow-xl shadow-black/25 sm:shadow-2xl sm:shadow-black/30"
+                            >
+                              🥖
+                            </motion.div>
+
                             <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300">Perfect pizza dough</p>
                             <h3 className="mx-auto mt-3 max-w-md text-3xl font-black leading-[.94] tracking-[-0.055em] sm:text-4xl">One dough for every pizza.</h3>
+
                             <div className="mx-auto mt-5 grid max-w-sm grid-cols-3 gap-2 text-center text-xs font-bold text-amber-50/75">
                               <div className="rounded-2xl bg-white/[0.07] px-3 py-3"><span className="block text-lg text-amber-200">500 g</span>Flour</div>
                               <div className="rounded-2xl bg-white/[0.07] px-3 py-3"><span className="block text-lg text-amber-200">325 ml</span>Water</div>
                               <div className="rounded-2xl bg-white/[0.07] px-3 py-3"><span className="block text-lg text-amber-200">24h</span>Ferment</div>
                             </div>
+
                             <p className="mx-auto mt-5 max-w-xs text-sm font-bold leading-6 text-amber-50/62">Tap to flip the card and reveal the full dough formula.</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="absolute inset-0 overflow-y-auto overscroll-contain p-5 sm:p-6" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-3xl" />
+                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/12 blur-md sm:blur-3xl" />
+
                         <div className="relative">
                           <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300">Dough formula</p>
                           <h3 className="mt-3 text-3xl font-black leading-[.94] tracking-[-0.055em] sm:text-4xl">The base recipe</h3>
+
                           <div className="mt-5 grid gap-4 sm:grid-cols-2">
                             <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10">
                               <h4 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-amber-300">Ingredients</h4>
@@ -655,6 +708,7 @@ export default function ScanoryPizzaExperience() {
                                 <li>1 tbsp olive oil, optional</li>
                               </ul>
                             </div>
+
                             <div className="rounded-3xl bg-black/20 p-4 ring-1 ring-white/10">
                               <h4 className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-amber-300">Method</h4>
                               <ol className="space-y-2 text-sm leading-6 text-amber-50/76">
@@ -667,6 +721,7 @@ export default function ScanoryPizzaExperience() {
                               </ol>
                             </div>
                           </div>
+
                           <div className="mt-4 rounded-3xl bg-[#d9a441] p-4 text-sm font-black leading-6 text-stone-950">
                             Stretch by hand. Do not use a rolling pin — it pushes out the air that makes the crust light.
                           </div>
@@ -682,7 +737,7 @@ export default function ScanoryPizzaExperience() {
       </main>
 
       <AnimatePresence>
-        {selected && <RecipeModal pizza={selected} onClose={() => setSelected(null)} />}
+        {selected && <RecipeModal pizza={selected} onClose={() => setSelected(null)} isMobile={isMobile} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -692,30 +747,34 @@ export default function ScanoryPizzaExperience() {
   );
 }
 
-function RecipeModal({ pizza, onClose }) {
+function RecipeModal({ pizza, onClose, isMobile = false }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.1 }}
+      transition={{ duration: 0.08 }}
       onClick={onClose}
-      className="fixed inset-0 z-40 flex items-end bg-black/72 p-3 sm:backdrop-blur-md sm:items-center sm:justify-center sm:p-6"
+      className="fixed inset-0 z-40 flex items-end bg-black/72 p-3 sm:items-center sm:justify-center sm:p-6 sm:backdrop-blur-md"
     >
       <motion.div
-        initial={{ y: 20, scale: 0.99, opacity: 0 }}
+        initial={{ y: isMobile ? 22 : 14, scale: isMobile ? 1 : 0.99, opacity: 0 }}
         animate={{ y: 0, scale: 1, opacity: 1 }}
         exit={{ y: 14, scale: 0.99, opacity: 0 }}
-        transition={{ duration: 0.16, ease: fastEase }}
+        transition={{ duration: isMobile ? 0.12 : 0.16, ease: fastEase }}
         onClick={(e) => e.stopPropagation()}
-        className={`relative max-h-[92svh] w-full max-w-3xl overscroll-contain overflow-y-auto rounded-[1.8rem] transform-gpu border border-white/10 bg-gradient-to-br ${pizza.bg} p-5 shadow-2xl shadow-black sm:rounded-[2rem] sm:p-7`}
+        className={`relative max-h-[92svh] w-full max-w-3xl overscroll-contain overflow-y-auto rounded-[1.8rem] transform-gpu border border-white/10 bg-gradient-to-br ${pizza.bg} p-5 shadow-xl shadow-black sm:rounded-[2rem] sm:p-7 sm:shadow-2xl`}
       >
         <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${pizza.palette}`} />
-        <button onClick={onClose} className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white sm:backdrop-blur active:scale-95"><X size={20} /></button>
+
+        <button onClick={onClose} className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-3 text-white active:scale-95 sm:backdrop-blur">
+          <X size={20} />
+        </button>
 
         <div className="grid gap-5 md:grid-cols-[.78fr_1.22fr]">
           <div className="flex flex-col items-center justify-center rounded-[1.45rem] bg-black/18 p-4 ring-1 ring-white/10 sm:rounded-[1.6rem]">
-            <PizzaIllustration pizza={pizza} active />
+            <PizzaIllustration pizza={pizza} active isMobile={isMobile} />
+
             <div className="mt-2 flex flex-wrap justify-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold"><Clock size={13} />{pizza.time}</span>
               <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold"><Flame size={13} />{pizza.heat}</span>
@@ -730,7 +789,10 @@ function RecipeModal({ pizza, onClose }) {
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <div>
-                <h4 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-amber-300"><Leaf size={16} /> Ingredients</h4>
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-amber-300">
+                  <Leaf size={16} /> Ingredients
+                </h4>
+
                 <ul className="space-y-2">
                   {pizza.ingredients.map((item) => (
                     <li key={item} className="flex gap-3 text-sm leading-6 text-amber-50/76">
@@ -740,8 +802,12 @@ function RecipeModal({ pizza, onClose }) {
                   ))}
                 </ul>
               </div>
+
               <div>
-                <h4 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-amber-300"><ChefHat size={16} /> Preparation</h4>
+                <h4 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-amber-300">
+                  <ChefHat size={16} /> Preparation
+                </h4>
+
                 <ol className="space-y-3">
                   {pizza.steps.map((step, index) => (
                     <li key={step} className="flex gap-3 text-sm leading-6 text-amber-50/76">
@@ -755,7 +821,9 @@ function RecipeModal({ pizza, onClose }) {
 
             <div className={`mt-6 rounded-3xl bg-gradient-to-r ${pizza.palette} p-[1px]`}>
               <div className="rounded-3xl bg-black/45 p-4">
-                <p className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-amber-200"><Star size={14} /> Chef tip</p>
+                <p className="mb-1 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-amber-200">
+                  <Star size={14} /> Chef tip
+                </p>
                 <p className="text-sm leading-6 text-amber-50/82">{pizza.chef}</p>
               </div>
             </div>
@@ -772,7 +840,7 @@ function SecretModal({ onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.12 }}
+      transition={{ duration: 0.1 }}
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:backdrop-blur-md"
     >
@@ -780,9 +848,9 @@ function SecretModal({ onClose }) {
         initial={{ y: 14, scale: 0.99 }}
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 14, scale: 0.99 }}
-        transition={{ duration: 0.16, ease: fastEase }}
+        transition={{ duration: 0.14, ease: fastEase }}
         onClick={onClose}
-        className="w-full max-w-sm rounded-[1.8rem] border border-amber-200/20 bg-gradient-to-br from-[#d9a441] to-[#8b5a2b] p-6 text-stone-950 shadow-2xl shadow-black/40"
+        className="w-full max-w-sm rounded-[1.8rem] border border-amber-200/20 bg-gradient-to-br from-[#d9a441] to-[#8b5a2b] p-6 text-stone-950 shadow-xl shadow-black/35 sm:shadow-2xl sm:shadow-black/40"
       >
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-stone-950 text-3xl">🔥</div>
         <p className="text-xs font-black uppercase tracking-[0.28em] text-stone-800/70">Chef secret</p>
